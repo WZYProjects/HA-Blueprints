@@ -1,0 +1,115 @@
+blueprint:
+  name: HA Notificação Campainha
+  description: >
+
+    # [Notificação da Campainha no Home Assistant](https://github.com/WZYProjects/HA-Blueprints "WZYProjects Blueprints")
+
+    ### Mostra uma notificação presistente no Home Assistant quando alguem toca a campainha.
+
+    Opcional: Se selecionar uma câmera ou duas, tambem irá receber fotos nas notificações.
+
+    Os ficheiros das fotos são criados e guardados na pasta "/config/www/doorbell"
+
+
+    Version: 0.6
+
+  author: w00zy
+  source_url: https://github.com/WZYProjects/HA-Blueprints
+
+  domain: automation
+
+  input:
+    notification_title:
+      name: Título
+      description: >
+        **O título da notificação.**
+
+        *Padrão: "Campainha!"*
+      default: "Campainha!"
+    notification_message:
+      name: Mensagem
+      description: >
+        **A mensagem da notificação.**
+
+        *Padrão: "Alguem tocou a campainha"*
+      default: "Alguem tocou a campainha"
+    doorbell_sensor:
+      name: Sensor Campainha
+      description: >
+        **O sensor associado com o toque da campainha.**
+
+        *Sensor que mude o estado para 'on' ou 'ringing'*
+      selector:
+        entity:
+          domain: 
+          - sensor
+          - binary_sensor
+    doorbell_camera:
+      name: Câmera da Campainha (Opcional)
+      description: >
+        **Selecione a câmera se quiser adicionar uma foto na notificação.**
+
+        *doorbell_cam_timestamp.jpg*
+      default: []
+      selector:
+        entity:
+          domain: 
+          - camera
+    security_camera:
+      name: Câmera de Segurança (Optional)
+      description: >
+        **Selecione a câmera se quiser adicionar uma foto na notificação.**
+
+        *security_cam_timestamp.jpg*
+      default: []
+      selector:
+        entity:
+          domain: 
+          - camera
+
+variables:
+  notification_title: !input notification_title
+  notification_message: !input notification_message
+  doorbell_sensor: !input doorbell_sensor
+  doorbell_camera: !input doorbell_camera
+  security_camera: !input security_camera
+  doorbell_snapshot: '/local/doorbell/doorbell_cam_{{ now().strftime("%Y-%m-%d_%H-%M") }}.jpg'
+  security_snapshot: '/local/doorbell/security_cam_{{ now().strftime("%Y-%m-%d_%H-%M") }}.jpg'
+
+trigger:
+  - platform: state
+    entity_id: !input doorbell_sensor
+
+condition: 
+  - condition: template
+    value_template: "{{ trigger.to_state.state in ['on','ringing'] }}"
+
+action:
+  - service: camera.snapshot
+    target:
+      entity_id: !input doorbell_camera
+    data_template:
+      filename: '/config/www/doorbell/doorbell_cam_{{ now().strftime("%Y-%m-%d_%H-%M") }}.jpg'
+  - service: camera.snapshot
+    target:
+      entity_id: !input security_camera
+    data_template:
+      filename: '/config/www/doorbell/security_cam_{{ now().strftime("%Y-%m-%d_%H-%M") }}.jpg'
+  - service: persistent_notification.create
+    data_template:
+      title: '{{ notification_title }}'
+      message: >
+        {% if doorbell_camera and security_camera %}
+          {{ notification_message }} <br>
+          <img src="{{ security_snapshot }}">
+          <img src="{{ doorbell_snapshot }}">
+        {% elif doorbell_camera %}
+          {{ notification_message }} <br>
+          <img src="{{ doorbell_snapshot }}">
+        {% elif security_camera %}
+          {{ notification_message }} <br>
+          <img src="{{ security_snapshot }}">
+        {% else %}
+          {{ notification_message }}
+        {% endif %}
+    
