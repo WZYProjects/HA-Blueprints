@@ -8,7 +8,7 @@ blueprint:
 
     Optional: If you select a camera, you will also get a snapshot in the notification.
 
-    Snapshot files are stored in the folder "/config/www/doorbell"
+    Snapshot files are created and stored in the folder "/config/www/doorbell"
 
 
     Version: 0.6
