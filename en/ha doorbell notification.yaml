@@ -36,15 +36,14 @@ blueprint:
     doorbell_sensor:
       name: Doorbell Sensor
       description: >
-        **The sensors associated with the doorbell ringing.**
+        **The sensor associated with the doorbell ringing.**
 
-        *Sensors that change the state to 'on' or 'ringing'*
+        *Sensor that change the state to 'on' or 'ringing'*
       selector:
         entity:
           domain: 
           - sensor
           - binary_sensor
-          multiple: true
     doorbell_camera:
       name: Doorbell Camera (Optional)
       description: >
